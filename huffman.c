@@ -24,7 +24,7 @@ struct Q_Node {
 int main(int argc, uint8_t **argv)
 {
     if (argc < 2)
-        fprintf(stderr, "usage: ./huffman filename"), exit(1);
+        fprintf(stderr, "usage: ./huffman filename\n"), exit(1);
 
     int f = open(argv[1], O_RDONLY);
     if (f == -1)
@@ -40,37 +40,46 @@ int main(int argc, uint8_t **argv)
     if (bytes < 0)
         fprintf(stderr, "read failed\n"), exit(1);
 
-    struct Q_Node front = { 0 };
+    struct Q_Node *front;
     int i;
+    int Q_count = 0;
     for (i = 0; i < 256; i++)
         if (byte_count[i]) {
-            front.count = byte_count[i];
-            front.bst = calloc(sizeof(struct BST_Node), 1);
-            front.bst->byte = i;
+            front = calloc(sizeof(struct Q_Node), 1);
+            front->count = byte_count[i];
+            front->bst = calloc(sizeof(struct BST_Node), 1);
+            front->bst->byte = i;
+            Q_count++;
             break;
         }
 
     while (++i < 256)
         if (byte_count[i]) {
-            struct Q_Node *iter;
-            for (
-                iter = &front;
-                iter->next && iter->next->count < byte_count[i];
-                iter = iter->next
-            );
             struct Q_Node *new_node = calloc(sizeof(struct Q_Node), 1);
             new_node->count = byte_count[i];
             new_node->bst = calloc(sizeof(struct BST_Node), 1);
             new_node->bst->byte = i;
+            struct Q_Node *iter;
+            for (
+                iter = front;
+                iter->next && iter->next->count < byte_count[i];
+                iter = iter->next
+            );
             new_node->next = iter->next;
             iter->next = new_node;
+            Q_count++;
         }
 
     // print queue
-    for (struct Q_Node *iter = &front; iter; iter = iter->next)
+    for (struct Q_Node *iter = front; iter; iter = iter->next)
         printf("%d: %llu\n", iter->bst->byte, iter->count);
 
+/*    while (Q_count-- > 1) {
+        struct Q_Node *new_node = front;
+        front = front->next->next;
 
+    }    
+*/
     close(f);
 }
 
