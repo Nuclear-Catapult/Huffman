@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <math.h>
 
 // We only use the "byte" data in leaf nodes, and each node has either
 // two or no children. Thus, if "left" is null (no left child), then we know 
@@ -43,6 +44,21 @@ void print_tree(struct BST_Node *node)
     printf("popping 1\n");
 }
 
+double entropy(int64_t byte_count[256])
+{
+    int64_t total_bytes = 0;
+    // count bytes in file
+    for (int i = 0; i < 256; i++)
+        total_bytes += byte_count[i];
+
+    double e = 0;
+    for (int i = 0; i < 256; i++)
+        if (byte_count[i]) {
+            double p = (double)byte_count[i] / total_bytes;
+            e += p * (log(p) / log(2));
+        }
+    return -e;
+}
 
 int main(int argc, uint8_t **argv)
 {
@@ -59,6 +75,8 @@ int main(int argc, uint8_t **argv)
     int bytes;
     while ((bytes = read(f, &input, 1)) == 1)
         byte_count[input]++;
+
+    close(f);
 
     if (bytes < 0)
         fprintf(stderr, "read failed\n"), exit(1);
@@ -91,5 +109,6 @@ int main(int argc, uint8_t **argv)
 
     printf("printing tree:\n");
     print_tree(huffman_tree);
-    close(f);
+
+    printf("entropy: %f\n", (float)entropy(byte_count));
 }
