@@ -30,20 +30,6 @@ void insert_Q_Node(struct Q_Node **iter, struct Q_Node *new_node)
     *iter = new_node;
 }
 
-void print_tree(struct BST_Node *node)
-{
-    if (! node->left) {
-        printf("found 0x%x: %c\n", node->byte, node->byte);
-        return;
-    }
-    printf("pushing 0\n");
-    print_tree(node->left);
-    printf("popping 0\n");
-    printf("pushing 1\n");
-    print_tree(node->right);
-    printf("popping 1\n");
-}
-
 double entropy(int64_t byte_count[256])
 {
     int64_t total_bytes = 0;
@@ -59,6 +45,8 @@ double entropy(int64_t byte_count[256])
         }
     return -e;
 }
+
+void print_tree(struct BST_Node *node);
 
 int main(int argc, uint8_t **argv)
 {
@@ -83,7 +71,7 @@ int main(int argc, uint8_t **argv)
 
     printf("generating priority queue\n");
     struct Q_Node *front = NULL;
-    for (int i = 0; i < 256; i++)
+    for (int i = 0; i < 256; i++) {
         if (byte_count[i]) {
             struct Q_Node *new_node = calloc(sizeof(struct Q_Node), 1);
             new_node->count = byte_count[i];
@@ -91,7 +79,7 @@ int main(int argc, uint8_t **argv)
             new_node->bst->byte = i;
             insert_Q_Node(&front, new_node);
         }
-
+    }
     printf("transforming priority queue into huffman tree\n");
     while (front->next) {
         struct Q_Node *new_node = front;
@@ -107,8 +95,41 @@ int main(int argc, uint8_t **argv)
     struct BST_Node *huffman_tree = front->bst;
     free(front);
 
-    printf("printing tree:\n");
+    printf("printing tree\n");
     print_tree(huffman_tree);
 
     printf("entropy: %f\n", (float)entropy(byte_count));
+}
+
+#include <ctype.h>
+
+uint64_t code = 0;
+char count = 0;
+char bit_count[255];
+void print_tree(struct BST_Node *node)
+{
+    if (! node->left) {
+        printf("0x%x %c\t", node->byte,
+                isprint(node->byte) ? node->byte : ' ' );
+        char temp = code;
+        for (int i = 0; i < count; i++) {
+            printf("%d", temp & 1);
+            temp >>= 1;
+        }
+        printf("\n");
+        bit_count[node->byte] = count;
+        return;
+    }
+    
+    count++;
+    code <<= 1;
+
+    print_tree(node->left);
+
+    code |= 1;
+    
+    print_tree(node->right);
+
+    count--;
+    code >>= 1;
 }
