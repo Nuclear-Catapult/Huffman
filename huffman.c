@@ -105,7 +105,6 @@ int main(int argc, uint8_t **argv)
 
 uint64_t code = 0;
 char count = 0;
-char bit_count[255];
 void print_tree(struct BST_Node *node)
 {
     if (! node->left) {
@@ -117,7 +116,6 @@ void print_tree(struct BST_Node *node)
             temp >>= 1;
         }
         printf("\n");
-        bit_count[node->byte] = count;
         return;
     }
     
